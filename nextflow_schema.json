@@ -1,0 +1,291 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/ndeimler99/pombeTARPON/master/nextflow_schema.json",
+    "title": "ndeimler99/pombeTARPON",
+    "description": "A pipeline to Analyze Pombe Specific Telomeric sequences from Nanopore Sequencing",
+    "type": "object",
+    "definitions": {
+        "Input_Options": {
+            "title": "Input Parameters",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-right",
+            "description": "Mandatory Parameters to set up the Analysis",
+            "required": ["input", "run_name"],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "path",
+                    "exists": true,
+                    "title": "Input File",
+                    "description": "Sequencing Files - Either a file directory or a single file - BAM, fastq, or fastq.gz accepted"
+                },
+                "run_name":{
+                    "type": "string",
+                    "title": "Run Name",
+                    "description": "Title of Sequencing Run for Generation of Output Files"
+                },
+                "sample_name":{
+                    "type": "string",
+                    "title": "Sample Name",
+                    "description": "Name of sample when sequencing contains only one sample"
+                }
+            }
+        },
+        "Demux_Options": {
+            "title": "Demultiplexing Parameters",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-right",
+            "description": "Mandatory Parameters to set up the Analysis",
+            "properties": {    
+                "demuxed": {
+                    "type": "boolean",
+                    "default" : false
+                },
+                "nanopore_barcodes": {
+                    "type":"boolean",
+                    "default":false
+                },
+                "sample_file":{
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "\\S+csv$",
+                    "title": "Sample File",
+                    "description": "CSV file containing sample names and barcodes to use for demultiplexing. If no adaptor sequence is provided the barcodes will also be used for determing the end of the telomere",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "barcode_errors":{
+                    "type":"number",
+                    "default":3,
+                    "title":"Allowed Errors in Barcode Sequences",
+                    "description": "Number of allowed errors in the barcode sequence. It is recomended this value by 1/8 the length of the barcode assuming the hamming distance between barcodes is greater than 1/8 the barcode length"
+                },
+                "capture_probe_sequence": {
+                    "type":"string",
+                    "title":"Telomere Capture Sequence",
+                    "description": "Provide the first 12 nucleotides of the capture sequence that would appear on the G strand telomeric sequences"
+                },
+                "capture_probe_sequence_errors":{
+                    "type":"number",
+                    "default":2,
+                    "title": "Allowed Errors in Adaptor Sequence",
+                    "description": "Number of allowed errors to be found in the capture probe sequence. It is recomended this value be 2 for a 12 nucleotide adaptor sequence. For each additional 8bp, the number of errors should be increased by 1"
+                }
+            }
+        },
+        "Reference_files": {
+            "title": "Reference Files",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-right",
+            "description": "Mandatory Parameters to set up the Analysis",
+            "properties": {
+                "pombe_genome": {
+                    "type": "string",
+                    "format": "path",
+                    "title":"Pombe Reference Genome",
+                    "default": "./data/Schizosaccharomyces_pombe.ASM294v2.dna.toplevel.fa.gz"
+                },
+                "rDNA_TAS_file":{
+                    "type": "string",
+                    "format": "path",
+                    "title": "Subtelomeric Element Fasta File",
+                    "default": "./data/TAS.rDNA.fa"
+                }
+            }
+        },
+        "Output_Options": {
+            "title": "Output Parameters",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-right",
+            "description": "Mandatory Parameters to set up the Analysis",
+            "required": ["outdir"],
+            "properties": {
+                "outdir": {
+                    "type": "string",
+                    "format": "path",
+                    "title": "Output Directory",
+                    "default": "output",
+                    "description": "This should be a path to a directory to store the output data. The parent directory should exist. If the main directory does not exist it will be created"
+                },
+                "overwrite_outdir": {
+                    "type": "boolean",
+                    "default":false,
+                    "title": "Overwrite Output Directory?",
+                    "description": "Set this to true if the output directory already exists but you would like to overwrite the data"
+                }
+            }
+        },
+        "Advanced_Telomere_Parameters":{
+            "title": "Advanced Parameters for Telomere Isolation and Identification",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-right",
+            "description": "Advanced Parameters for Telomere Isolation and Identification",
+            "properties": {
+                "repeat":{
+                    "type": "string",
+                    "default": "GGTTAC",
+                    "title": "Repeat",
+                    "description": "Telomeric Repeat"
+                },
+                "repeat_count":{
+                    "type": "number",
+                    "default":3,
+                    "title":"Number of Repeats",
+                    "description":"Number of Repeats in last read_fragmet_length bp of sequence for read to be identified as telomeric"
+                },
+                "read_fragment_length":{
+                    "type": "number",
+                    "default": 1000,
+                    "title": "Read Subset Length",
+                    "description": "Distance from end of read to the end of the read to search for telomeric repeats"
+                },
+                "minimum_strand_percentage":{
+                    "type": "number",
+                    "default": 30,
+                    "title": "Minimum Strand Percentage",
+                    "description": "% of G strand repeats to be classified as G vs C strand.  Reads between this value and (1-this value) will be excluded from analysis"
+                },
+                "canonical_start":{
+                    "type": "string",
+                    "default": "GGGTTACAAGGTTACG",
+                    "title": "Canonical Sequence Start",
+                    "description": "Sequence used to identify the start of telomeric sequences"
+                },
+                "canonical_start_errors":{
+                    "type": "number",
+                    "default":3,
+                    "title": "Canonical Start Sequence Errors",
+                    "description":"Number of Errors allowed in canonical start sequence used to identify telomere start"
+                },
+                "telo_start_repeat_count":{
+                    "type":"number",
+                    "default": 4,
+                    "title": "Telomere Start Repeat Count",
+                    "description":"Number of Consecutive Telomeric Repeats to use to identify the start of the telomere if canonical start is not found"
+                },
+                "telo_start_error_count":{
+                    "type": "number",
+                    "default": 4,
+                    "title": "Telomere Start Error Count",
+                    "description": "Number of errors allowed in telomere start repeat count when searching for start of telomere"
+                },
+                "telo_end_repeat_count":{
+                    "type": "number",
+                    "default": 2,
+                    "title": "Telomere End Repeat Count",
+                    "description": "Number of consecutive telomeric repeats used to identify the end of the telomere sequence"
+                },
+                "telo_end_error_count":{
+                    "type": "number",
+                    "default": 2,
+                    "title":"Telomere End Error Count",
+                    "desciption": "Number of errors allowed while searching for the last telo end repeat count repeats"
+                }
+            }
+        },
+        "Cluster_and_Blast":{
+            "title": "Cluster and Blast Paramater",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-right",
+            "description": "Advanced Parameters relating to the clustering of telomeric sequences",
+            "properties" : {
+                "TAS1_TAS3_percent_identity":{
+                    "type":"number",
+                    "default":95,
+                    "title":"TAS1/3 Percent Identity",
+                    "description": "Percent Identity of TAS1 and TAS3 elements via blast to include in cluster plot"
+                },
+                "TAS2_percent_identity":{
+                    "type":"number",
+                    "default":85,
+                    "title":"TAS2 Percent Identity",
+                    "description": "Percent Identity of TAS2 elements via blast to include in cluster plot"
+                },
+                "TAS_length_fraction":{
+                    "type":"number",
+                    "default":0.85,
+                    "title": "TAS Length Fraction",
+                    "description": "Length of blast hit must exceed this fraction times the length of the TAS element to be plotted in cluster plot"
+                },
+                "cluster_telo_length":{
+                    "type": "number",
+                    "default": 5000,
+                    "title": "Cluster Read Length",
+                    "description": "Minimum subtelomeric read length required for read to be included in clustering analysis"
+                },
+                "cluster_similarity_threshold":{
+                    "type":"number",
+                    "default": 0.95,
+                    "title": "Cluster Similarity Threshold",
+                    "description": "Similarity threshold to be used while running meshclust"
+                },
+                "cluster_plot_width":{
+                    "type": "number",
+                    "default": 20000,
+                    "title": "Clustering Plot Nucleotides",
+                    "description":"Number of Subtelomeric Nucleotides to plot"
+                },
+                "image_width_px":{
+                    "type":"number",
+                    "default": 1500,
+                    "title": "Image Width",
+                    "description": "Clustering plot image width in pixels"
+                },
+                "image_height_px":{
+                    "type":"number",
+                    "default": 800,
+                    "title": "Image Height",
+                    "description": "Clustering plot image height in pixels"
+                },
+                "minimum_cluster_size":{
+                    "type":"number",
+                    "default": 10,
+                    "title": "Minimum Cluster Size",
+                    "description": "Minimum number of reads in cluster to be included in clustering plots and consensus analysis"
+                },
+                "consensus":{
+                    "type":"boolean",
+                    "default":false,
+                    "title": "Perform Consensus Analysis",
+                    "description": "If set to true a consensus sequence will be determined for each cluster and plotted. This will increase computational time substantially"
+                },
+                "alignment_percentage":{
+                    "type":"number",
+                    "default":70,
+                    "title":"Percentage of Alignments",
+                    "description": "The proportion of reads within a cluster that must contain a common nucleotide for the consensus sequence to be determined"
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/Input_Options"
+        },
+        {
+            "$ref": "#/definitions/Demux_Options"
+        },
+        {
+            "$ref": "#/definitions/Reference_files"
+        },
+        {
+            "$ref": "#/definitions/Output_Options"
+        },
+        {
+            "$ref": "#/definitions/Advanced_Telomere_Parameters"
+        },
+        {
+            "$ref": "#/definitions/Cluster_and_Blast"
+        }
+    ],
+    "resources": {
+        "recommended": {
+            "cpus": 2,
+            "memory": "10GB"
+        },
+        "minimum": {
+            "cpus": 2,
+            "memory": "4GB"
+        },
+        "run_time": "Depends on Sequencing Size"
+    }
+}

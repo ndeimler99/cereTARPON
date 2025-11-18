@@ -1,0 +1,4 @@
+FROM yanhui09/identity:latest AS meshclust
+USER root
+RUN mkdir /var/lib/dpkg/
+RUN apt-get -y update && apt-get install -y procps

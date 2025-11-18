@@ -1,0 +1,1 @@
+This is a rough pipeline for the analysis of telomeric sequences originating from the WGS of S. cerevisiae using Nanopore sequencing. It should be, in it's current state used with caution. If interested, users should contact Nathaniel Deimler at nathanieldeimler.research@gmail.com in order to learn more about the pipeline, it's development, and practical use.
