@@ -44,7 +44,7 @@ workflow {
 
     preprocess_out = PREPROCESS_FILES()
 
-    isolate_telomeric_sequences = ISOLATE_TELO_SEQS()
+    isolate_telomeric_sequences = ISOLATE_TELO_SEQS(preprocess_out.input)
 
     //telo_results = TELOMERE_STATS(preprocess_out.reverse_complemented_reads)
 

@@ -3,10 +3,10 @@
     Import Required Workflows and Processes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { alignment } from "../bin/process.nf"
-include { isolate } from "../bin/process.nf"
-include { telo_filter } from "../bin/process.nf"
-include { identify_start } from "../bin/process.nf"
+include { ALIGNMENT } from "../bin/process.nf"
+include { ISOLATE_TELO_READS } from "../bin/process.nf"
+// include { FILTER_TELOMERES } from "../bin/process.nf"
+// include { IDENTIFY_TELO_COORDS } from "../bin/process.nf"
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Run Workflow
@@ -16,22 +16,22 @@ include { identify_start } from "../bin/process.nf"
 workflow ISOLATE_TELO_SEQS {
 
     take:
-        input_read_fastq
+        input_bam
 
     main:
         Pinguscript.ping_start(nextflow, workflow, params)
 
-        aln_results = alignment(input_read_fastq)
+        aln_results = ALIGNMENT(input_bam)
         
-        putative_telomeres = isolate(aln_results.alignment)
+        putative_telomeres = ISOLATE_TELO_READS(aln_results.alignment)
 
-        filtered_telomeres = telo_filter(putative_telomeres.telomeric)
+        // filtered_telomeres = FILTER_TELOMERES(putative_telomeres.telomeric)
 
-        telo_stats = identify_start(filtered_telomeres.telomeric)
+        // telo_stats = IDENTIFY_TELO_COORDS(filtered_telomeres.telomeric)
 
         // group all results for html report?
 
-    emit:
-        grouped_results
+    // emit:
+    //     grouped_results
 
 }

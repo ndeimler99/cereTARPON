@@ -40,15 +40,11 @@ workflow validate_parameters {
             println("Error - Input File or Directory Does not Exist")
         }
 
-        if (params.capture_probe_sequence != "" && params.nanopore_barcodes != false){
-            parameters_passed = false
-            println ("Adaptor Sequence and Nanopore Barcodes cannot both be specified")
-        }
 
         // if demux is specified sample file should not be provided and nanopore barcodes should be false
-        if (params.demuxed && params.nanopore_barcodes){
+        if (params.multiplexed && params.sample_file == ''){
             parameters_passed = false
-            println ("If data is already demultiplexed nanopore_barcodes should not be provided")
+            println ("Sample File Must Be Specified")
         }
 
         // If a sample file is specified, it must be a valid file
