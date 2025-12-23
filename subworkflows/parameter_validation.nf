@@ -40,34 +40,42 @@ workflow validate_parameters {
             println("Error - Input File or Directory Does not Exist")
         }
 
+        try {
+            file(params.cere_genome, checkIfExists:true)
+            file(params.fsa_idx, checkIfExists: true)
+        }
+        catch(Exception e){
+            parameters_passed = false
+            println("Error - Cerevisiae Genome Fasta or Index File Does not Exist")
+        }
 
         // if demux is specified sample file should not be provided and nanopore barcodes should be false
-        if (params.multiplexed && params.sample_file == ''){
-            parameters_passed = false
-            println ("Sample File Must Be Specified")
-        }
+        // if (params.multiplexed && params.sample_file == ''){
+        //     parameters_passed = false
+        //     println ("Sample File Must Be Specified")
+        // }
 
         // If a sample file is specified, it must be a valid file
-        try {
-            if (params.sample_file != ""){
-                file(params.sample_file, checkIfExists:true)
-            }
-        }
-        catch (Exception e) {
-            parameters_passed = false
-            println("Error - Sample File not Found")
-        }
+        // try {
+        //     if (params.sample_file != ""){
+        //         file(params.sample_file, checkIfExists:true)
+        //     }
+        // }
+        // catch (Exception e) {
+        //     parameters_passed = false
+        //     println("Error - Sample File not Found")
+        // }
 
-        //check to ensure barcodes hamming distance is greater than the number of allowable errors in the barcode
-        if (params.sample_file != ''){
-            try {
-                barcode_check = BARCODE_HAMMING_CHECK(file(params.sample_file))
-            }
-            catch (Exception e){
-                parameters_passed = false
-                println "Supplied Barcode Sequences are too Similar for Demultiplexing with ${params.barcode_errors} Errors Allowed. Please reduce error amount."
-            }
-        }
+        // //check to ensure barcodes hamming distance is greater than the number of allowable errors in the barcode
+        // if (params.sample_file != ''){
+        //     try {
+        //         barcode_check = BARCODE_HAMMING_CHECK(file(params.sample_file))
+        //     }
+        //     catch (Exception e){
+        //         parameters_passed = false
+        //         println "Supplied Barcode Sequences are too Similar for Demultiplexing with ${params.barcode_errors} Errors Allowed. Please reduce error amount."
+        //     }
+        // }
 
     emit:
         passed = parameters_passed

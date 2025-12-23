@@ -51,12 +51,6 @@ workflow {
     // generate html report
     //GENERATE_HTML_REPORT(telo_results.telo_stats.collect())
 
-
-
-
-
-
-
     // for each sample
         // isolate telomeric sequences
     

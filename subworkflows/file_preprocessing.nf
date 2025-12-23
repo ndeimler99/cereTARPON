@@ -23,9 +23,9 @@ include { COMBINE_BAM } from "../bin/process.nf"
         // else
         if (file(params.input).isDirectory()){
             // combine files
-            input_ch = Channel.fromPath ( "${params.input}/*" ).map{ it -> [it.baseName, it]}
-            bam_ch = CHECK_AND_CONVERT_TO_BAM(input_ch)
-            bam_ch = COMBINE_BAM(input_ch)
+            // input_ch = Channel.fromPath ( "${params.input}/*" ).map{ it -> [it.baseName, it]}
+            // bam_ch = CHECK_AND_CONVERT_TO_BAM(input_ch)
+            // bam_ch = COMBINE_BAM(input_ch)
         }
         else {
             input_ch = Channel.fromPath (params.input).map{ it -> [it.baseName, it]}
