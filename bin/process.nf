@@ -222,5 +222,26 @@ process CALCULATE_TELO_LENGTH {
 }
 
 
+process getVersions {
+
+    label "cereTARPON"
+    tag "Getting Versions"
+
+    output:
+        path "versions.txt", emit: versions
+
+    script:
+    """
+    python --version | sed 's/ /,/' >> versions.txt
+    python -c "import regex; print(f'regex,{regex.__version__}')" >> versions.txt
+    python -c "import pandas; print(f'pandas,{pandas.__version__}')" >> versions.txt
+    python -c "import argparse; print(f'argparse,{argparse.__version__}')" >> versions.txt
+    python -c "import pysam; print(f'pysam,{pysam.__version__}')" >> versions.txt
+    python -c "import dominate; print(f'dominate,{dominate.__version__}')" >> versions.txt
+    python -c "import ezcharts; print(f'ezcharts,{ezcharts.__version__}')" >> versions.txt
+    python -c "import numpy; print(f'numpy,{numpy.__version__}')" >> versions.txt
+    """
+}
+
 
 
