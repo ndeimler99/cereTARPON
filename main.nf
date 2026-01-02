@@ -27,6 +27,8 @@ include { PREPROCESS_FILES } from "./subworkflows/file_preprocessing.nf"
 //include { analyze_telomeres,cluster_telomeres } from "./subworkflows/telomere_analysis.nf"
 include { paramsHelp; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 include { ISOLATE_TELO_SEQS } from "./subworkflows/isolate_telomeres.nf"
+include { getParams; getVersions; getManifest} from "./bin/process.nf"
+include { GENERATE_HTML_REPORT } from "./bin/process.nf"
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Run Workflow
@@ -42,10 +44,17 @@ workflow {
         exit 1, "Parameter Validation Failed"
     }
 
+    parameters = getParams()
+    versions = getVersions()
+    manifest = getManifest()
+
     preprocess_out = PREPROCESS_FILES()
 
     isolate_telomeric_sequences = ISOLATE_TELO_SEQS(preprocess_out.input)
 
+    GENERATE_HTML_REPORT(parameters.params, versions.versions, manifest.manifest, \
+                        isolate_telomeric_sequences.aln_stats.collect(), \
+                        isolate_telomeric_sequences.telo_stats.collect())
     //telo_results = TELOMERE_STATS(preprocess_out.reverse_complemented_reads)
 
     // generate html report

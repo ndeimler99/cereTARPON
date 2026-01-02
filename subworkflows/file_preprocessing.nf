@@ -22,16 +22,24 @@ include { COMBINE_BAM } from "../bin/process.nf"
             // if files need to be demultiplexed
         // else
         if (file(params.input).isDirectory()){
-            // combine files
-            // input_ch = Channel.fromPath ( "${params.input}/*" ).map{ it -> [it.baseName, it]}
-            // bam_ch = CHECK_AND_CONVERT_TO_BAM(input_ch)
-            // bam_ch = COMBINE_BAM(input_ch)
+            if (params.demultiplexed){
+                input_ch = Channel.fromPath ( "${params.input}/*" ).map{ it -> [it.baseName, it]}
+                bam_ch = CHECK_AND_CONVERT_TO_BAM(input_ch)
+            }
+            else {
+                // combine_files
+                input_ch = Channel.fromPath ( "${params.input}/*" ).map{ it -> [it.baseName, it]}
+                bam_ch = CHECK_AND_CONVERT_TO_BAM(input_ch)
+                bam_ch = bam_ch.map { key,value -> value}
+                bam_ch = COMBINE_BAM(bam_ch.collect().map { it -> ["${params.sample_name}", it]})
+            }
+         
         }
         else {
             input_ch = Channel.fromPath (params.input).map{ it -> [it.baseName, it]}
             bam_ch = CHECK_AND_CONVERT_TO_BAM(input_ch)
         }
-     
+
     emit:
         input = bam_ch
  }

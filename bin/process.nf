@@ -5,16 +5,50 @@ process COMBINE_BAM {
     tag "$file_type Combining BAM Files"
 
     input: 
-        tuple val(file_type), path(input_files)
+        tuple val(sample_name), path(input_files)
 
     output:
-        tuple val(params.run_name), path("${file_type}.bam"), emit:combined
+        tuple val(params.run_name), path("${sample_name}.bam"), emit:combined
 
     script:
     """
-    samtools merge -o ${file_type}.bam ${input_files} 
+    samtools merge -o ${sample_name}.bam ${input_files} 
     """
 }
+
+process getParams {
+
+    label "cereTARPON"
+    tag "Getting Parameters"
+
+    output:
+        path "params.json", emit:params
+
+    script:
+    json_str = JsonOutput.toJson(params)
+    json_indented = JsonOutput.prettyPrint(json_str)
+
+    """
+    echo '${json_indented}' > "params.json"
+    """
+}
+
+process getManifest {
+    
+    label 'cereTARPON'
+    tag "Collecting Manifest Data"
+
+    output:
+        path "manifest.json", emit:manifest
+
+    script:
+    json_str = JsonOutput.toJson(workflow.manifest)
+    json_indented = JsonOutput.prettyPrint(json_str)
+    """
+    echo '${json_indented}' > "manifest.json"
+    """
+}
+
 
 process BARCODE_HAMMING_CHECK {
 
@@ -148,9 +182,6 @@ process IDENTIFY_TELO_COORDS {
     output:
         tuple val(sample_name), path("*coordinates_identified.bam"), emit: telomeric
         path("telomeric_coordinates.results.txt")
-    
-    publishDir "${params.outdir}/${sample_name}/", mode: 'copy', overwrite: true, pattern:"telomeric_coordinates.results.txt"
-
 
     script:
     """
@@ -203,7 +234,8 @@ process CALCULATE_TELO_LENGTH {
 
     output:
         tuple val(sample_name), path(input_file), emit: telomeres
-        tuple val(sample_name), path("*.telo_stats.txt"), emit: telo_stats
+        tuple val(sample_name), path("*.telo_stats.txt"), emit: telo_stats_tuple
+        path("*.telo_stats.txt"), emit:telo_stats
         path("*.pdf")
 
     publishDir "${params.outdir}/${sample_name}/", mode: 'copy', overwrite: true, pattern:"*telo_stats.txt"
@@ -233,15 +265,65 @@ process getVersions {
     script:
     """
     python --version | sed 's/ /,/' >> versions.txt
+    printf "samtools,%s\\n" "\$(samtools --version | head -n 1 | sed 's/^samtools //')" >> versions.txt
+    printf "minimap2,%s\\n" "\$(minimap2 --version)" >> versions.txt
     python -c "import regex; print(f'regex,{regex.__version__}')" >> versions.txt
-    python -c "import pandas; print(f'pandas,{pandas.__version__}')" >> versions.txt
     python -c "import argparse; print(f'argparse,{argparse.__version__}')" >> versions.txt
     python -c "import pysam; print(f'pysam,{pysam.__version__}')" >> versions.txt
+    python -c "import pandas; print(f'pandas,{pandas.__version__}')" >> versions.txt
     python -c "import dominate; print(f'dominate,{dominate.__version__}')" >> versions.txt
     python -c "import ezcharts; print(f'ezcharts,{ezcharts.__version__}')" >> versions.txt
     python -c "import numpy; print(f'numpy,{numpy.__version__}')" >> versions.txt
     """
 }
 
+process GET_ALIGNMENT_STATS {
+
+    label 'cereTARPON'
+    tag 'Processing Alignment'
+
+    input:
+        tuple val(sample_name), file(alignment_bam)
+
+    output:
+        path("${sample_name}.alignment_stats.txt"), emit: alignment_stats
 
 
+    script:
+    """
+    get_alignment_stats.py --alignment_file ${alignment_bam} --out_file ${sample_name}.alignment_stats.txt
+    """
+
+}
+
+process GENERATE_HTML_REPORT {
+    label 'cereTARPON'
+    tag 'Generating HTML Report'
+
+    input:
+        path("params.json")
+        path("versions.txt")
+        path("manifest.json")
+        path(alignment_files)
+        path(stats_files)
+
+    output:
+        path("report.html")
+    //     path("*.pdf")
+
+    publishDir "${params.outdir}/", mode: 'copy', overwrite:true, pattern:"*.html"
+    //publishDir "${params.outdir}/FIGURES/", mode: 'copy', overwrite:true, pattern:"*.pdf"
+
+    script:
+    """
+    generate_html_report.py --workflow_name cereTARPON \
+                            --report report.html \
+                            --params params.json \
+                            --versions versions.txt \
+                            --manifest manifest.json \
+                            --fsa_idx ${params.fsa_idx} \
+                            --minimum_read_count ${params.minimum_read_count} \
+                            --alignment_files ${alignment_files} \
+                            --stats_files ${stats_files} 
+    """
+}
