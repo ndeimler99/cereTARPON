@@ -12,7 +12,7 @@ This subworkflow first ensures that data does not exist within the specified --o
 
 ## Pre-process Files Subworkflow
 
-Currently --input must be a single file. If it is not a ubam file, it will be converted from fastq format to ubam by picard. In the future, as this pipeline expands, files will additionally be demultiplexed at this step
+Currently --input must be a single file or a directory of files. If a directory is provided, samples will be treated as demultiplex if the --dmultiplexed variable is set to true. If not, the files will be treated as if they belong to the same sample and combined. 
 
 ## Telomere Analysis Subworkflow
 
